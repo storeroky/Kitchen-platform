@@ -1,3 +1,4 @@
+
 import DimensionLine from './DimensionLine.jsx'
 import { SECTION_TYPES, m, sumWidths } from '../utils/kitchenModel.js'
 
@@ -9,7 +10,7 @@ const WALL_BOTTOM = 330
 const COUNTER_Y = 250
 const UPPER_BOTTOM = 130
 
-export default function ElevationView({ layout, material }) {
+export default function ElevationView({ layout, material, cabinetColor }) {
   const { sections, totalWidth, height } = layout
   const total = sumWidths(sections) || 1
   const drawableW = VIEW_W - PAD * 2
@@ -24,6 +25,8 @@ export default function ElevationView({ layout, material }) {
   })
 
   const countertopColor = material?.hex || '#efe8da'
+  // الأجهزة (فرن/غسالة/ميكروويف/ثلاجة) تبقى بلون معدني محايد — اللون المختار يطبّق فقط على أبواب الخزائن المدهونة
+  const APPLIANCE_TYPES = ['oven', 'washer', 'microwave', 'tall']
 
   return (
     <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} className="w-full h-auto" role="img" aria-label="مخطط واجهة المطبخ">
@@ -45,6 +48,7 @@ export default function ElevationView({ layout, material }) {
       {/* الوحدات */}
       {drawn.map((s) => {
         const def = SECTION_TYPES[s.type]
+        const doorColor = cabinetColor && !APPLIANCE_TYPES.includes(s.type) ? cabinetColor : def.color
         return (
           <g key={s.id}>
             {/* خزانة سفلية */}
@@ -53,7 +57,7 @@ export default function ElevationView({ layout, material }) {
               y={COUNTER_Y}
               width={s.w - 3}
               height={WALL_BOTTOM - COUNTER_Y}
-              fill={def.color}
+              fill={doorColor}
               stroke="#0c0f14"
               strokeWidth="1"
             />
@@ -67,7 +71,7 @@ export default function ElevationView({ layout, material }) {
                 y={WALL_TOP}
                 width={s.w - 3}
                 height={UPPER_BOTTOM - WALL_TOP}
-                fill={def.color}
+                fill={doorColor}
                 opacity="0.92"
                 stroke="#0c0f14"
                 strokeWidth="1"
