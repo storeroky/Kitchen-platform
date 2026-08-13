@@ -1,3 +1,4 @@
+
 import DimensionLine from './DimensionLine.jsx'
 import { m, sumWidths } from '../utils/kitchenModel.js'
 
