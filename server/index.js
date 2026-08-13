@@ -48,6 +48,8 @@ app.post('/api/generate-design', async (req, res) => {
   try {
     let imageUrl
     if (referenceImage) {
+      // وضع "تحويل صورة SketchUp" يحتاج مزوّد يقبل صورة كمدخل (image-to-image)
+      // المزوّد المجاني (Pollinations) لا يدعم هذا حالياً بشكل موثوق، لذا يتطلب OpenAI أو Stability
       if (PROVIDER === 'pollinations') {
         return res.status(400).json({
           message:
@@ -59,6 +61,7 @@ app.post('/api/generate-design', async (req, res) => {
           ? await transformWithStability(prompt, referenceImage)
           : await transformWithOpenAI(prompt, referenceImage)
     } else {
+      // وضع "توليد من الصفر" — مجاني بالكامل عبر Pollinations افتراضياً
       if (PROVIDER === 'stability') imageUrl = await generateWithStability(prompt)
       else if (PROVIDER === 'openai') imageUrl = await generateWithOpenAI(prompt)
       else imageUrl = await generateWithPollinations(prompt)
@@ -83,10 +86,15 @@ app.get('/api/health', (_req, res) => res.json({ ok: true, provider: PROVIDER })
 
 // ---------- مزوّدو الصور (يمكن إضافة المزيد بنفس النمط) ----------
 
+// مزوّد مجاني بالكامل — بدون مفتاح API وبدون بطاقة دفع
+// Pollinations.ai: خدمة مفتوحة المصدر، تولّد الصورة مباشرة عبر رابط GET بسيط.
+// نُرجع الرابط للواجهة مباشرة بدل تنزيل الصورة بالسيرفر، لتفادي مضاعفة وقت الانتظار
+// (Pollinations قد تأخذ 5-15 ثانية لتوليد الصورة فعلياً عند فتح الرابط في المتصفح).
 async function generateWithPollinations(prompt) {
-  const encoded = encodeURIComponent(prompt.slice(0, 800))
-  const seed = Math.floor(Math.random() * 1_000_000)
-  return `https://image.pollinations.ai/prompt/${encoded}?width=1536&height=1024&nologo=true&seed=${seed}`
+  const encoded = encodeURIComponent(prompt.slice(0, 800)) // حد أقصى معقول لطول الوصف بالرابط
+  const seed = Math.floor(Math.random() * 1_000_000) // seed عشوائي لضمان صورة جديدة بكل مرة بدل نتيجة مخزّنة (cache)
+  // model=flux يعطي جودة أعلى بكثير من النموذج الافتراضي (تفاصيل أوضح، أقل ضبابية)
+  return `https://image.pollinations.ai/prompt/${encoded}?width=1536&height=1024&model=flux&nologo=true&seed=${seed}`
 }
 
 async function generateWithOpenAI(prompt) {
@@ -120,6 +128,8 @@ async function generateWithOpenAI(prompt) {
   throw new Error('لم يتم استلام صورة من OpenAI')
 }
 
+// تحويل صورة SketchUp (2D) إلى تصميم واقعي عبر OpenAI images/edits
+// هذا المسار يستخدم الصورة المرفوعة كأساس، فيحافظ على نفس تكوين وأبعاد المخطط الأصلي
 async function transformWithOpenAI(prompt, referenceImageDataUrl) {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) throw new Error('OPENAI_API_KEY غير مضبوط في .env')
@@ -150,6 +160,8 @@ async function transformWithOpenAI(prompt, referenceImageDataUrl) {
   throw new Error('لم يتم استلام صورة محوّلة من OpenAI')
 }
 
+// تحويل صورة SketchUp عبر Stability AI — يستخدم مسار "control/structure" المصمم
+// خصيصاً للحفاظ على خطوط وتكوين الرسم الأصلي (مثالي لمخططات SketchUp) مع واقعية كاملة
 async function transformWithStability(prompt, referenceImageDataUrl) {
   const apiKey = process.env.STABILITY_API_KEY
   if (!apiKey) throw new Error('STABILITY_API_KEY غير مضبوط في .env')
@@ -158,7 +170,7 @@ async function transformWithStability(prompt, referenceImageDataUrl) {
   const form = new FormData()
   form.append('prompt', prompt)
   form.append('image', new Blob([imageBuffer]), 'sketchup-reference.png')
-  form.append('control_strength', '0.7')
+  form.append('control_strength', '0.7') // كلما زادت القيمة زاد التزام النتيجة بخطوط الصورة الأصلية
   form.append('output_format', 'png')
 
   const response = await fetch('https://api.stability.ai/v2beta/stable-image/control/structure', {
@@ -214,3 +226,4 @@ async function generateWithStability(prompt) {
 app.listen(PORT, () => {
   console.log(`✔ Raqiy AI server running on http://localhost:${PORT} (provider: ${PROVIDER})`)
 })
+
