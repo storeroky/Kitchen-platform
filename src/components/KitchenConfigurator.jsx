@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import ElevationView from './ElevationView.jsx'
 import FloorPlanView from './FloorPlanView.jsx'
@@ -6,7 +7,7 @@ import { SECTION_TYPES, defaultLayout, sumWidths } from '../utils/kitchenModel.j
 let uid = 100
 const nextId = () => `s${uid++}`
 
-export default function KitchenConfigurator({ layout, setLayout, material }) {
+export default function KitchenConfigurator({ layout, setLayout, material, cabinetColor }) {
   const [openSection, setOpenSection] = useState(null)
 
   function updateField(field, value) {
@@ -121,7 +122,7 @@ export default function KitchenConfigurator({ layout, setLayout, material }) {
       <div className="space-y-6">
         <div className="bg-gradient-to-b from-ink-800 to-ink-900 border hairline rounded-xl p-4">
           <p className="text-[11px] text-bone/40 mb-2 tracking-widest2 uppercase">واجهة المطبخ</p>
-          <ElevationView layout={{ ...layout, totalWidth: measuredWidth }} material={material} />
+          <ElevationView layout={{ ...layout, totalWidth: measuredWidth }} material={material} cabinetColor={cabinetColor} />
         </div>
         <div className="bg-gradient-to-b from-ink-800 to-ink-900 border hairline rounded-xl p-4">
           <p className="text-[11px] text-bone/40 mb-2 tracking-widest2 uppercase">المخطط الأرضي</p>
