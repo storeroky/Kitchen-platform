@@ -7,17 +7,31 @@ import { MATERIALS, DEFAULT_SPECS, sumWidths } from '../utils/kitchenModel.js'
 export default function DesignCard({ layout, material, aiImageUrl }) {
   const cardRef = useRef(null)
   const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState(null)
   const measuredWidth = sumWidths(layout.sections)
 
   async function handleExport() {
     if (!cardRef.current) return
     setExporting(true)
+    setExportError(null)
     try {
-      const canvas = await html2canvas(cardRef.current, { backgroundColor: '#07090c', scale: 2 })
+      const canvas = await html2canvas(cardRef.current, {
+        backgroundColor: '#07090c',
+        scale: 2,
+        useCORS: true,
+        allowTaint: false
+      })
       const link = document.createElement('a')
       link.download = 'raqiy-kitchen-design.png'
       link.href = canvas.toDataURL('image/png')
       link.click()
+    } catch (err) {
+      console.error('Export failed:', err)
+      setExportError(
+        aiImageUrl
+          ? 'تعذّر تضمين الصورة المولّدة بالذكاء الاصطناعي داخل ملف PNG بسبب قيود المتصفح. يمكنك حفظ الصورة نفسها بالضغط بزر الفأرة الأيمن عليها ← "حفظ الصورة باسم".'
+          : 'تعذّر تصدير البطاقة. حاول مرة أخرى.'
+      )
     } finally {
       setExporting(false)
     }
@@ -39,7 +53,12 @@ export default function DesignCard({ layout, material, aiImageUrl }) {
         {/* الصورة الرئيسية: صورة AI إن وجدت، وإلا المخطط */}
         <div className="rounded-lg overflow-hidden border hairline mb-5">
           {aiImageUrl ? (
-            <img src={aiImageUrl} alt="تصميم المطبخ" className="w-full h-auto" />
+            <img
+              src={aiImageUrl}
+              alt="تصميم المطبخ"
+              crossOrigin="anonymous"
+              className="w-full h-auto"
+            />
           ) : (
             <div className="bg-gradient-to-b from-ink-800 to-ink-900 p-3">
               <ElevationView layout={{ ...layout, totalWidth: measuredWidth }} material={material} />
@@ -88,7 +107,7 @@ export default function DesignCard({ layout, material, aiImageUrl }) {
         </p>
       </div>
 
-      <div className="flex justify-center mt-4">
+      <div className="flex flex-col items-center mt-4 gap-2">
         <button
           onClick={handleExport}
           disabled={exporting}
@@ -96,6 +115,7 @@ export default function DesignCard({ layout, material, aiImageUrl }) {
         >
           {exporting ? 'جارٍ التصدير…' : 'تنزيل البطاقة كصورة PNG'}
         </button>
+        {exportError && <p className="text-xs text-red-300 text-center max-w-md">{exportError}</p>}
       </div>
     </div>
   )
