@@ -4,7 +4,7 @@ import ElevationView from './ElevationView.jsx'
 import FloorPlanView from './FloorPlanView.jsx'
 import { MATERIALS, DEFAULT_SPECS, sumWidths } from '../utils/kitchenModel.js'
 
-export default function DesignCard({ layout, material, aiImageUrl }) {
+export default function DesignCard({ layout, material, cabinetColor, aiImageUrl }) {
   const cardRef = useRef(null)
   const [exporting, setExporting] = useState(false)
   const [exportError, setExportError] = useState(null)
@@ -61,7 +61,11 @@ export default function DesignCard({ layout, material, aiImageUrl }) {
             />
           ) : (
             <div className="bg-gradient-to-b from-ink-800 to-ink-900 p-3">
-              <ElevationView layout={{ ...layout, totalWidth: measuredWidth }} material={material} />
+              <ElevationView
+                layout={{ ...layout, totalWidth: measuredWidth }}
+                material={material}
+                cabinetColor={cabinetColor?.hex}
+              />
             </div>
           )}
         </div>
@@ -84,7 +88,7 @@ export default function DesignCard({ layout, material, aiImageUrl }) {
           <div className="hidden sm:block w-px bg-gold-500/20 self-stretch" />
           <div>
             <p className="text-gold-300 text-xs font-semibold mb-2">اختيار المواد</p>
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 mb-3">
               {MATERIALS.map((mat) => (
                 <div key={mat.id} className="flex items-center gap-2">
                   <span
@@ -99,6 +103,18 @@ export default function DesignCard({ layout, material, aiImageUrl }) {
                 </div>
               ))}
             </div>
+            {cabinetColor && (
+              <>
+                <p className="text-gold-300 text-xs font-semibold mb-2">لون الخزائن</p>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-4 h-4 rounded-full border border-gold-400/60"
+                    style={{ backgroundColor: cabinetColor.hex }}
+                  />
+                  <span className="text-[11px] text-bone/60">{cabinetColor.name}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
