@@ -14,7 +14,7 @@ const MODES = [
   { id: 'transform', label: 'تحويل صورة SketchUp' }
 ]
 
-export default function AIDesignGenerator({ layout, material, onGenerated }) {
+export default function AIDesignGenerator({ layout, material, cabinetColor, onGenerated }) {
   const [mode, setMode] = useState('generate')
   const [style, setStyle] = useState('luxury-modern')
   const [notes, setNotes] = useState('')
@@ -31,7 +31,14 @@ export default function AIDesignGenerator({ layout, material, onGenerated }) {
     setError(null)
     try {
       const dimensions = `${layout.height.toFixed(2)}×${layout.depth.toFixed(2)} م، ${layout.sections.length} وحدات`
-      const prompt = buildPrompt({ style, notes, material: material?.name, dimensions, mode })
+      const prompt = buildPrompt({
+        style,
+        notes,
+        material: material?.name,
+        cabinetColor: cabinetColor?.name,
+        dimensions,
+        mode
+      })
       const { imageUrl } = await generateKitchenImage({
         prompt,
         style,
@@ -102,6 +109,19 @@ export default function AIDesignGenerator({ layout, material, onGenerated }) {
         </div>
       </div>
 
+      <div className="mb-3">
+        <label className="block text-[11px] text-bone/50 mb-1">لون الخزائن المختار</label>
+        <div className="w-full bg-ink-950 border hairline rounded-md text-sm px-2 py-1.5 text-bone/70 flex items-center gap-2">
+          {cabinetColor && (
+            <span
+              className="w-3.5 h-3.5 rounded-full border border-black/30 shrink-0"
+              style={{ backgroundColor: cabinetColor.hex }}
+            />
+          )}
+          {cabinetColor?.name || 'لم يتم الاختيار بعد'}
+        </div>
+      </div>
+
       <label className="block text-[11px] text-bone/50 mb-1">تفاصيل إضافية (اختياري)</label>
       <textarea
         value={notes}
@@ -142,7 +162,7 @@ export default function AIDesignGenerator({ layout, material, onGenerated }) {
   )
 }
 
-function buildPrompt({ style, notes, material, dimensions, mode }) {
+function buildPrompt({ style, notes, material, cabinetColor, dimensions, mode }) {
   const styleMap = {
     'luxury-modern': 'modern luxury kitchen, sleek matte cabinetry, brushed gold accents',
     'classic-gold': 'classic elegant kitchen with warm gold trims and rich wood tones',
@@ -158,6 +178,7 @@ function buildPrompt({ style, notes, material, dimensions, mode }) {
   return [
     base,
     mode === 'transform' ? styleMap[style] : null,
+    cabinetColor ? `cabinet door color: ${cabinetColor}` : null,
     material ? `main surface material: ${material}` : null,
     `kitchen proportions approx ${dimensions}`,
     notes,
